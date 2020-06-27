@@ -1,0 +1,256 @@
+<!DOCTYPE HTML> 
+
+<head>
+
+  <title> kind zijn </title>
+
+<div id="app">
+
+     <h1><p style="font-family:helvetica,serif;font-size:24px;font-style:regular;">
+         kind zijn
+      </p></h1>
+
+  <input type="range" v-model="lr"/>
+  <div class="mouseball"></div>
+  <div><h8>
+       <iframe width="800" height="500" src="https://www.youtube.com/embed/ZHRmHmrpAyI?&autoplay=1&controls=0&rel=0&loop=10" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+      </h8>
+  </div>
+</div>
+
+
+  <style>
+html, body {
+  height: 100%;
+  margin: 0;
+  background-color: black;
+  color: white;
+  overflow: hidden;
+}
+
+#app {
+  height: 100%;
+  display: -webkit-box;
+  display: flex;
+  -webkit-box-pack: center;
+          justify-content: center;
+  -webkit-box-align: center;
+          align-items: center;
+  -webkit-box-orient: vertical;
+  -webkit-box-direction: normal;
+          flex-direction: column;
+}
+
+h2 {
+  width: 200px;
+  height: 200px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  display: -webkit-box;
+  display: flex;
+  -webkit-box-pack: center;
+          justify-content: center;
+  -webkit-box-align: center;
+          align-items: center;
+  font-size: 50px;
+  -webkit-transition: 0.4s;
+  transition: 0.4s;
+  -webkit-transform-origin: center center;
+          transform-origin: center center;
+}
+h2.active, h2:active {
+  background-color: rgba(255, 255, 255, 0.5);
+  -webkit-transition: 0s;
+  transition: 0s;
+}
+
+.mouseball {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background-color: #f24;
+  position: absolute;
+  left: 0;
+  top: 0;
+  -webkit-transform: translate(-50%, -50%);
+          transform: translate(-50%, -50%);
+}
+
+
+
+</style>
+</head>
+
+
+<body>
+
+<script src='https://cdnjs.cloudflare.com/ajax/libs/vue/2.5.13/vue.min.js'></script> 
+<script src='https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js'></script> 
+<script src='https://cdnjs.cloudflare.com/ajax/libs/gsap/latest/TweenMax.min.js'></script> 
+<script src='https://cdnjs.cloudflare.com/ajax/libs/tone/13.0.1/Tone.js'></script>
+
+
+<script>
+	var split = new Tone.Merge().toMaster();
+
+window.addEventListener("click",function(){
+  Tone.context.resume()
+})
+
+
+//背景頻率
+
+var player = new Tone.Player("/Users/lydia/Documents/2Moving Image/anna maria/website/testing_audio2/dark.mp3").toMaster();
+
+var base = new Tone.Oscillator({
+  frequency: 110,
+  partials  : [4,4,0.5,0.01],
+  type: "sawtooth4",
+  detune  : 10 
+});
+base.volume=0.2
+
+//Delay Node
+var feedbackDelay = new Tone.FeedbackDelay("8n", 0.5);
+
+//Notes
+var synth = new Tone.MonoSynth({
+"oscillator" : {
+		"type" : "sine"
+ },
+ "envelope" : {
+ 	"attack" : 0.2,
+  "release": 1
+ },
+  volume: 0.15,
+  partials  : [1,0.05,0.1,0.01],
+  detune  : 10 
+}).connect(feedbackDelay).connect(split.left).connect(split.right)
+feedbackDelay.connect(split.left).connect(split.right);
+
+var sounds = ['E3',"C4","E4",'G4']
+var index = 0
+
+
+
+let music = [
+  {
+    base: "F1",
+    notes: ['D4',"F4","G4",'A4']
+  },
+  {
+    base: "C1",
+    notes: ['C4',"D4","B3",'A3']
+  },
+  {
+    base: "F1",
+    notes: ['E3',"E5","C4",'B3']
+  },
+  {
+    base: "C1",
+    notes: ['C1',"C5","C3",'A3']
+  },
+]
+
+//loop for music and beats
+var loop = new Tone.Loop(function(time){
+	let para = parseInt(time/4)%music.length
+  synth.triggerAttackRelease(music[para].notes[index++ % 4], "8n");
+  $(".cir").addClass("active")
+  setTimeout(()=>{
+    $(".cir").removeClass("active")
+    
+  },50)
+  base.frequency.value=music[para].base
+  // tom.triggerAttackRelease("A2","32n");
+}, "4n").start(0);
+Tone.Transport.start();
+
+
+base.connect(split.left);
+base.connect(split.right);
+
+base.start();
+
+//Vue control panel
+var vm = new Vue({
+  el: "#app",
+  data: {
+    lr: 50
+  },
+  mounted(){
+    setInterval(()=>{
+      this.updateLR()
+    },100)
+  },
+  methods:{
+    updateLR(){
+
+      split.left.gain.value=split.left.gain.value+(this.lrVolume.l-split.left.gain.value)*0.1
+      split.right.gain.value=split.right.gain.value+(this.lrVolume.r-split.right.gain.value)*0.1
+      // let obj = {
+      //   l: split.left.gain.value,
+      //   r: split.right.gain.value
+      // }
+      // TweenMax.to(obj,0.05,{
+      //   l: this.lrVolume.l,
+      //   r: this.lrVolume.r,
+      //   onUpdate(){
+      //     split.left.gain.value=obj.l
+      //     split.right.gain.value=obj.r
+      //     console.log(obj)
+      //   }
+      // })
+    }
+  },
+  watch:{
+    lr(){
+      this.updateLR()
+    }
+  },
+  computed:{
+    lrVolume(){
+      let result= {
+        l: ((50-this.lr)/50+1)/5,
+        r: ((this.lr-50)/50+1)/5
+      }
+      if (result.l<0.01){
+        result.l=0
+      }
+      if (result.r<0.01){
+        result.r=0
+      }
+      return result
+    },
+    displayNum(){
+      return parseInt(this.lr)-50
+    }
+  }
+})
+
+//listen to mousemove to change values
+window.addEventListener("mousemove",(evt)=>{
+  vm.lr= (evt.pageX)/window.innerWidth*100
+  $(".mouseball").css({
+    left: evt.x,
+    top: evt.y,
+    'background-color': `rgb(255,${evt.x},${evt.x})`
+  })
+})
+
+
+
+
+</script>
+
+
+
+
+</body> 
+
+
+
+
+
+
+</HTML> 

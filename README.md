@@ -1,2 +1,2 @@
-# liedijaa.github.io
+# http://liedijaa.github.io
 website voor Anna Maria
